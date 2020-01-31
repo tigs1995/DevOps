@@ -1,0 +1,35 @@
+#!/bin/bash
+
+sudo apt update
+sudo apt install docker.io -y
+sudo usermod -aG docker $USER
+sudo chmod 777 /var/run/docker.sock
+sudo systemctl enable docker
+
+docker stop event-front-end
+docker rm event-front-end
+
+docker rmi -f event-front-end
+
+cd ..
+
+rm -rf eventBookingSystemFrontEnd
+
+git clone -b Docker https://github.com/tigs1995/eventBookingSystemFrontEnd.git 
+
+cd eventBookingSystemFrontEnd 
+
+curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+sudo apt-get install -y nodejs
+npm install
+npm run build
+
+docker build -t event-front-end . 
+
+docker run --restart always --name event-front-end -d -p 1901:80 event-front-end 
+
+
+
+
+
+

@@ -1,0 +1,65 @@
+1. Create a VPC (10.0.0.0/16)
+2. Create a subnet for each Availability zone within London region
+3. The CIDR blocks for the subnets should be (10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24)
+4. Create an EC2 instance within one of the subnets you just created, make sure you assign public IP to it
+5. Create a new security group that would allow you to access jenkins on it's port
+6. Install Jenkins on it (script, to change permissions: chmod +x script.sh):
+	- docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+	- OR
+	- sudo su -
+	- cat 'file path on jenkins page'
+7. Create a snapshot of the EC2 instance
+8. Terminate the instance
+9. Create a new instance from your snapshot AMI within one of the subnets you just created, make sure you assign public IP to it
+10. Assign the existing security group that allows you to connect to jenkins
+
+Shell script for Jenkins:
+#!/bin/bash
+if type apt > /dev/null; then
+    pkg_mgr=apt
+    java="openjdk-8-jre"
+elif type yum /dev/null; then
+    pkg_mgr=yum
+    java="java"
+fi
+echo "updating and installing dependencies"
+sudo ${pkg_mgr} update
+sudo ${pkg_mgr} install -y ${java} wget > /dev/null
+echo "configuring jenkins user"
+sudo useradd -m -s /bin/bash jenkins
+echo "downloading latest jenkins WAR"
+sudo su - jenkins -c "curl -L https://updates.jenkins-ci.org/latest/jenkins.war --output jenkins.war"
+echo "setting up jenkins service"
+sudo tee /etc/systemd/system/jenkins.service << EOF > /dev/null
+[Unit]
+Description=Jenkins Server
+[Service]
+User=jenkins
+WorkingDirectory=/home/jenkins
+ExecStart=/usr/bin/java -jar /home/jenkins/jenkins.war
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable jenkins
+sudo systemctl restart jenkins
+sudo su - jenkins << EOF
+until [ -f .jenkins/secrets/initialAdminPassword ]; do
+	sleep 1
+	echo "waiting for initial admin password"
+done
+until [[ -n "\$(cat  .jenkins/secrets/initialAdminPassword)" ]]; do
+	sleep 1
+	echo "waiting for initial admin password"
+done
+echo "initial admin password: \$(cat .jenkins/secrets/initialAdminPassword)"
+EOF
+
+1. Cloudwatch https://courseware.qa-portal.co.uk/?resourceName=aws/aws-cloud-watch
+2. Autoscaling https://courseware.qa-portal.co.uk/?resourceName=aws/aws-autoscalling-group
+3. Load balancers https://courseware.qa-portal.co.uk/?resourceName=aws/aws-load-balancer
+4. AWS Lambda https://courseware.qa-portal.co.uk/?resourceName=aws/aws-lambda
+5. Amazon RDS DATABASE https://courseware.qa-portal.co.uk/?resourceName=aws/aws-rds
+
+
+

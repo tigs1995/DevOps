@@ -1,0 +1,44 @@
+
+#!/bin/bash
+
+sudo apt update
+sudo apt install docker.io -y
+sudo usermod -aG docker $USER
+sudo chmod 777 /var/run/docker.sock
+sudo systemctl enable docker
+
+docker stop event-booking-system
+docker rm event-booking-system
+
+docker rmi -f event-booking-system
+
+cd .. 
+
+rm -rf EventBookingSystem
+
+git clone -b Docker https://github.com/tigs1995/EventBookingSystem.git 
+
+cd EventBookingSystem 
+
+docker build -t event-booking-system . 
+
+docker run --restart always --name event-booking-system -d -p 1800:8082 event-booking-system 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

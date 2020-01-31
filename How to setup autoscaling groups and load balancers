@@ -1,0 +1,46 @@
+How to get back end working:
+
+1. Create RDS database
+	Using latest engine version
+	Enable authentication with password and IAM role
+	Log in to database using root user credentials
+	Create a database
+
+2. Create a new role to give EC2 access to RDS
+	Assign the policy to give full access to RDS
+
+3. Create an EC2 instance for back end (with the previously created role)
+	Install docker
+	Make docker start up on boot
+	Clone back end repository
+	Change connection details to use RDS
+	Build back end image
+	Run backend container with --restart flag
+	Use Postman to test the endpoint
+	Stop the instance
+	Start the instance
+	Test again with postman that the docker container started up automatically
+
+4. Create an AMI of the back end EC2 instance
+
+5. Terminate the back end EC2 instance
+
+6. Create launch configuration with the back end AMI (for security group, create new one in the LC form but with same things as security group for VM) 
+
+7. Create an autoscaling group for back end (add all subnets, put it on default VPC)
+	min 1
+	desired 1
+	max 2
+	50%
+	120 seconds
+
+8. Create a load balancer for back end
+	Listener shoud listen to the port of the front end port (HTTP 80) and target back end port (HTTP 1800)
+	Select all availability zones
+	Select the default security group or any other that would allow all TCP access from anywhere
+	Target group should target the back end port (Instance HTTP 1800)
+
+9. Edit autoscaling group
+	add target group from the load balancer creation menu
+
+10. Use the DNS name of the load balancer to test that the load balancer would forward the request to the back end instancer running on autoscaling group and that the back end can call the database
